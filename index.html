@@ -1,0 +1,806 @@
+<title>Monster from the Aether</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap">
+
+<style>
+:root {
+  --bg: #f2ede0;
+  --surface: #faf7ef;
+  --surface-2: #ffffff;
+  --border: #cec3a4;
+  --border-2: #e0d8c0;
+  --text: #1c1610;
+  --text-mid: #3e3222;
+  --text-muted: #7a6e58;
+  --gold: #8c6e10;
+  --gold-ui: #c9a227;
+  --blood: #8b2015;
+  --blood-hover: #b02a1e;
+  --stat-bg: #fffbf2;
+  --stat-border: #c0a850;
+  --token-bg: #f7f2e8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #100e0b;
+    --surface: #181410;
+    --surface-2: #1e1a14;
+    --border: #332a1c;
+    --border-2: #2a2218;
+    --text: #ede5ce;
+    --text-mid: #c8ba9e;
+    --text-muted: #8a7e68;
+    --gold: #c9a227;
+    --gold-ui: #e0b830;
+    --blood: #b82a1e;
+    --blood-hover: #d03828;
+    --stat-bg: #141008;
+    --stat-border: #8a6a18;
+    --token-bg: #1a1610;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #100e0b;
+  --surface: #181410;
+  --surface-2: #1e1a14;
+  --border: #332a1c;
+  --border-2: #2a2218;
+  --text: #ede5ce;
+  --text-mid: #c8ba9e;
+  --text-muted: #8a7e68;
+  --gold: #c9a227;
+  --gold-ui: #e0b830;
+  --blood: #b82a1e;
+  --blood-hover: #d03828;
+  --stat-bg: #141008;
+  --stat-border: #8a6a18;
+  --token-bg: #1a1610;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Header ── */
+header {
+  text-align: center;
+  padding: 2rem 1.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.site-title {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: clamp(1.5rem, 4vw, 2.6rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--gold-ui);
+  margin: 0 0 0.25rem;
+  text-wrap: balance;
+}
+.site-sub {
+  font-style: italic;
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* ── Controls ── */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.9rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
+}
+.controls select,
+.controls input[type="text"] {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.9rem;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.4rem 0.7rem;
+  height: 34px;
+}
+.controls input[type="text"] { flex: 1; min-width: 120px; }
+.controls input::placeholder { color: var(--text-muted); }
+.draw-btn {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--blood);
+  color: #fff;
+  border: none;
+  border-radius: 2px;
+  padding: 0 1.4rem;
+  height: 34px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.draw-btn:hover { background: var(--blood-hover); }
+.draw-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Status / Error ── */
+#statusMsg {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+#errorMsg {
+  text-align: center;
+  padding: 1.25rem;
+  color: var(--blood-hover);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+/* ── Grid ── */
+.result-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+@media (min-width: 680px) {
+  .result-grid {
+    grid-template-columns: minmax(260px, 5fr) minmax(320px, 7fr);
+    align-items: start;
+  }
+}
+
+/* ── Card Panel ── */
+.card-panel {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+@media (min-width: 680px) {
+  .card-panel { position: sticky; top: 0; max-height: 100vh; overflow: hidden; }
+}
+@media (max-width: 679px) {
+  .card-panel { border-right: none; border-bottom: 1px solid var(--border); }
+}
+
+.art-wrap {
+  position: relative;
+  background: #0a0806;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+.art-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.4s;
+}
+.art-placeholder {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.card-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.card-thumb {
+  height: 52px; width: auto;
+  border-radius: 3px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+  flex-shrink: 0;
+}
+.card-meta { min-width: 0; }
+.card-meta-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-meta-line {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Stat Panel ── */
+.stat-panel {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Monster block */
+.monster-block {
+  background: var(--stat-bg);
+  border: 1px solid var(--stat-border);
+  border-radius: 1px;
+  padding: 1.2rem 1.2rem 0.9rem;
+}
+.monster-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin: 0 0 0.15rem;
+  text-wrap: balance;
+  line-height: 1.2;
+}
+.monster-type {
+  font-size: 0.78rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 0.65rem;
+}
+.stat-rule {
+  border: none;
+  border-top: 1px solid var(--stat-border);
+  margin: 0.65rem 0;
+}
+.stat-line-text {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.75;
+  color: var(--text-mid);
+  word-break: break-word;
+}
+.ability-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+.ability-item {
+  font-size: 0.88rem;
+  color: var(--text-mid);
+  padding-left: 1.1em;
+  position: relative;
+}
+.ability-item::before {
+  content: '◆';
+  position: absolute; left: 0;
+  font-size: 0.55em;
+  top: 0.32em;
+  color: var(--gold-ui);
+}
+.oracle-block {
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--text-muted);
+  border-top: 1px dashed var(--border-2);
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  white-space: pre-line;
+}
+.flavor-block {
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-2);
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+}
+
+/* Token section */
+.token-section {
+  background: var(--token-bg);
+  border: 1px solid var(--border);
+  border-radius: 1px;
+  padding: 1.1rem 1.2rem;
+}
+.section-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 0.9rem;
+}
+.token-row {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+}
+#tokenCanvas {
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.35);
+  background: #1a1612;
+}
+.token-aside {
+  flex: 1;
+  min-width: 150px;
+}
+.token-desc {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  margin: 0 0 0.7rem;
+}
+.btn-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.btn-outline {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+  padding: 0.4rem 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.btn-outline:hover {
+  background: var(--gold);
+  color: var(--bg);
+}
+.toast {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--gold-ui);
+  min-height: 1.2em;
+}
+</style>
+
+<header>
+  <h1 class="site-title">Monster from the Aether</h1>
+  <p class="site-sub">Draw a creature from the Blind Eternities and bind it to your dungeon.</p>
+</header>
+
+<div class="controls">
+  <select id="selColor">
+    <option value="">Any colour</option>
+    <option value="W">White</option>
+    <option value="U">Blue</option>
+    <option value="B">Black</option>
+    <option value="R">Red</option>
+    <option value="G">Green</option>
+    <option value="M">Multicolor</option>
+    <option value="C">Colorless</option>
+  </select>
+  <select id="selCost">
+    <option value="">Any cost</option>
+    <option value="1">MV 1</option>
+    <option value="2">MV 2</option>
+    <option value="3">MV 3</option>
+    <option value="4">MV 4</option>
+    <option value="5">MV 5</option>
+    <option value="6">MV 6</option>
+    <option value="7p">MV 7+</option>
+  </select>
+  <input type="text" id="nameInput" placeholder="…or name a card">
+  <button class="draw-btn" id="drawBtn">Draw a Monster</button>
+</div>
+
+<div id="statusMsg">Click "Draw a Monster" to pull a creature from the Aether.</div>
+<div id="errorMsg" hidden></div>
+
+<div class="result-grid" id="resultGrid" hidden>
+  <div class="card-panel">
+    <div class="art-wrap">
+      <img class="art-img" id="artImg" alt="" style="opacity:0">
+      <div class="art-placeholder" id="artPlaceholder">Loading art…</div>
+    </div>
+    <div class="card-info-bar">
+      <img class="card-thumb" id="cardThumb" alt="" hidden>
+      <div class="card-meta">
+        <div class="card-meta-name" id="metaName"></div>
+        <div class="card-meta-line" id="metaType"></div>
+        <div class="card-meta-line" id="metaSet"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-panel">
+    <div class="monster-block">
+      <h2 class="monster-name" id="monName"></h2>
+      <p class="monster-type" id="monType"></p>
+      <hr class="stat-rule">
+      <div class="stat-line-text" id="statLine"></div>
+      <hr class="stat-rule">
+      <ul class="ability-list" id="abilityList"></ul>
+      <div class="oracle-block" id="oracleBlock" hidden></div>
+      <div class="flavor-block" id="flavorBlock" hidden></div>
+    </div>
+
+    <div class="token-section">
+      <p class="section-label">Token</p>
+      <div class="token-row">
+        <canvas id="tokenCanvas" width="240" height="240"></canvas>
+        <div class="token-aside">
+          <p class="token-desc">512×512 PNG — drop directly into Foundry VTT as a token image.</p>
+          <div class="btn-row">
+            <button class="btn-outline" id="dlBtn">Download PNG</button>
+            <button class="btn-outline" id="copyBtn">Copy Stats</button>
+          </div>
+          <div class="toast" id="toast"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Conversion data ── */
+const COLOR_VOTES = {
+  W: { CON:1, WIS:1, STR:-1 },
+  U: { INT:1, DEX:1, CON:-1 },
+  B: { DEX:1, CHA:1, INT:-1 },
+  R: { CHA:1, STR:1, DEX:-1 },
+  G: { STR:1, CON:1, CHA:-1 }
+};
+
+const COLOR_RING = { W:'#c0bcb0', U:'#2864b8', B:'#585870', R:'#b02828', G:'#1a7832' };
+
+const KEYWORD_MAP = {
+  'Flying':         'Flying. MV far. Can attack and be attacked only by flying creatures or those with Reach.',
+  'Deathtouch':     'Deathtouch. A single hit forces a DC [DC] CON save or the target drops to 0 HP.',
+  'Trample':        'Trample. Excess damage on a killing blow carries over to a creature behind the target.',
+  'Double Strike':  'Double Strike. Makes two attack rolls each round.',
+  'First Strike':   'First Strike. Attacks before all other creatures; if target dies it cannot retaliate.',
+  'Lifelink':       'Lifelink. Heals HP equal to all damage dealt.',
+  'Vigilance':      'Vigilance. Attacking imposes no penalty to AC or saves.',
+  'Haste':          'Haste. Acts on the very first round of combat, even if surprised.',
+  'Reach':          'Reach. Can attack flying creatures from the ground.',
+  'Indestructible': 'Indestructible. Cannot be reduced to 0 HP by damage; a special condition is required to destroy it.',
+  'Menace':         'Menace. Cannot be engaged by fewer than two creatures at once.',
+  'Flash':          'Flash. May act once out of initiative order per round.',
+  'Hexproof':       'Hexproof. Cannot be targeted by spells or abilities; gains +4 to all magical saves.',
+  'Ward':           'Ward. Targeting this creature with magic requires a DC [DC] INT save or the spell fails.',
+  'Toxic':          'Toxic. Attacks inflict cumulative poison; 3 stacks deals 1d6 damage per round until cured.',
+  'Fear':           'Fear. Non-undead, non-construct creatures must pass a DC [DC] WIS save or flee for 1d4 rounds.',
+  'Menacing':       'Menace. Cannot be engaged by fewer than two creatures at once.',
+  'Defender':       'Defender. Cannot move to attack; gains +2 AC while stationary.',
+  'Banding':        'Banding. Adjacent allies may redirect received damage to this creature.',
+  'Flanking':       'Flanking. Enemies without Flanking that engage it fight at −1 to all rolls.',
+  'Phasing':        'Phasing. Once per round may become incorporeal, immune to physical damage until its next turn.',
+  'Shadow':         'Shadow. Exists in the shadow-plane; only interacts with other shadow creatures and magic.',
+  'Exalted':        'Exalted. When fighting alone (no allies nearby), gains advantage on attacks and +2 AC.',
+  'Infect':         'Infect. All damage is dealt as permanent −1 stat penalties, not HP loss.',
+  'Regenerate':     'Regenerate. Once per combat, when reduced to 0 HP, returns to 1 HP at the start of its next turn.',
+  'Protection':     'Protection. Immune to one damage type or creature type (GM determines from card text).',
+  'Annihilator':    'Annihilator. When it attacks, the target must discard [LVL÷3,min 1] items or lose an ally action.',
+  'Bushido':        'Bushido. When it enters melee it gains +2 to attacks and AC for that entire encounter.',
+  'Provoke':        'Provoke. Once per round can force one creature to attack it instead of another target.',
+  'Rampage':        'Rampage. For each creature beyond the first that blocks it, gains +1 to attacks and damage.',
+};
+
+/* ── Stat derivation ── */
+function getStatMods(colors, level) {
+  const STATS = ['STR','DEX','CON','INT','WIS','CHA'];
+  const t = Object.fromEntries(STATS.map(s => [s, 0]));
+  (colors||[]).forEach(c => {
+    const v = COLOR_VOTES[c];
+    if (v) Object.entries(v).forEach(([s,n]) => { t[s] += n; });
+  });
+
+  let hi, md, lo;
+  if      (level <= 2) { hi=2;  md=0;  lo=-2; }
+  else if (level <= 7) { hi=4;  md=1;  lo=-2; }
+  else if (level === 8){ hi=4;  md=2;  lo=-1; }
+  else                 { hi=5;  md=3;  lo=1;  }
+
+  if (!colors || colors.length === 0)
+    return Object.fromEntries(STATS.map(s => [s, md]));
+
+  const uniq = [...new Set(Object.values(t))].sort((a,b) => b-a);
+  const tier = {};
+  if (uniq.length === 1) { tier[uniq[0]] = md; }
+  else {
+    uniq.forEach((v,i) => {
+      tier[v] = i === 0 ? hi : i === uniq.length-1 ? lo : md;
+    });
+  }
+  return Object.fromEntries(STATS.map(s => [s, tier[t[s]] ?? md]));
+}
+
+function convertCard(card) {
+  const level  = Math.max(1, Math.round(card.cmc || 1));
+  const colors = card.colors || [];
+
+  const rawPow  = /^\d+$/.test(card.power)     ? parseInt(card.power, 10)     : null;
+  const rawTou  = /^\d+$/.test(card.toughness)  ? parseInt(card.toughness, 10) : null;
+
+  const mods = getStatMods(colors, level);
+  const dexAdj = mods.DEX >= 0 ? mods.DEX : Math.ceil(mods.DEX / 2);
+  const baseTou = rawTou !== null ? rawTou : level;
+  const ac = 11 + Math.ceil(baseTou / 2) + dexAdj;
+
+  const tier = level <= 2 ? 1 : level <= 7 ? 2 : 3;
+  const hp   = Math.max(1, Math.floor(4.5 * level) + mods.CON * tier);
+
+  const atkBonus = rawPow !== null ? rawPow : Math.floor(level / 2);
+
+  let damageDie = '1d6';
+  if      (mods.STR >= 5) damageDie = '1d12';
+  else if (mods.STR >= 4) damageDie = '1d10';
+  else if (mods.STR >= 2) damageDie = '1d8';
+  else if (mods.STR <= -2) damageDie = '1d4';
+
+  const keywords = card.keywords || [];
+  let mv = 'near';
+  if (keywords.includes('Flying')) mv = 'near (fly)';
+
+  const hasW = colors.includes('W'), hasB = colors.includes('B');
+  const align = hasW && !hasB ? 'L' : hasB && !hasW ? 'C' : 'N';
+
+  const dc = 10 + Math.floor(level / 2);
+
+  const abilities = keywords
+    .filter(k => KEYWORD_MAP[k])
+    .map(k => KEYWORD_MAP[k]
+      .replace(/\[DC\]/g, dc)
+      .replace(/\[LVL÷3,min 1\]/g, Math.max(1, Math.floor(level/3))));
+
+  const fm = n => n >= 0 ? `+${n}` : `${n}`;
+  const statLine =
+    `AC ${ac}, HP ${hp}, ATK ${fm(atkBonus)} (${damageDie}), MV ${mv}, ` +
+    `S ${fm(mods.STR)}, D ${fm(mods.DEX)}, C ${fm(mods.CON)}, ` +
+    `I ${fm(mods.INT)}, W ${fm(mods.WIS)}, Ch ${fm(mods.CHA)}, AL ${align}, LV ${level}`;
+
+  return { name:card.name, typeLine:card.type_line, level, ac, hp, atkBonus, damageDie,
+           mv, mods, align, abilities, statLine, colors,
+           oracleText: card.oracle_text || '', flavorText: card.flavor_text || '' };
+}
+
+/* ── Scryfall fetch ── */
+function buildUrl() {
+  const name  = document.getElementById('nameInput').value.trim();
+  const color = document.getElementById('selColor').value;
+  const cost  = document.getElementById('selCost').value;
+  if (name) return `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(name)}`;
+  let q = 'type:creature -type:land';
+  if (color === 'M') q += ' is:multicolor';
+  else if (color === 'C') q += ' color:C';
+  else if (color) q += ` color<=${color}`;
+  if (cost === '7p') q += ' cmc>=7';
+  else if (cost) q += ` cmc=${cost}`;
+  return `https://api.scryfall.com/cards/random?q=${encodeURIComponent(q)}`;
+}
+
+function getImgs(card) {
+  if (card.image_uris) return card.image_uris;
+  if (card.card_faces?.[0]?.image_uris) return card.card_faces[0].image_uris;
+  return null;
+}
+
+/* ── Canvas token ── */
+async function drawTokenToCanvas(canvas, artUrl, colors) {
+  const ctx  = canvas.getContext('2d');
+  const size = canvas.width;
+  ctx.clearRect(0, 0, size, size);
+
+  let ringColor = '#909098';
+  if (colors.length >= 2) ringColor = '#c9a227';
+  else if (colors.length === 1) ringColor = COLOR_RING[colors[0]] || ringColor;
+
+  const pad = Math.max(4, Math.round(size * 0.03));
+  const r   = size / 2 - pad;
+  const cx  = size / 2, cy = size / 2;
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+
+  await new Promise(resolve => {
+    img.onload = () => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.clip();
+      const sc = Math.max((r*2)/img.width, (r*2)/img.height);
+      const w = img.width*sc, h = img.height*sc;
+      ctx.drawImage(img, cx - w/2, cy - h/2, w, h);
+      ctx.restore();
+      resolve();
+    };
+    img.onerror = () => {
+      ctx.fillStyle = '#2a1e18';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fill();
+      resolve();
+    };
+    img.src = artUrl;
+  });
+
+  /* inner shadow ring */
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+  ctx.lineWidth = pad * 0.6;
+  ctx.stroke();
+
+  /* color ring */
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + pad * 0.3, 0, Math.PI*2);
+  ctx.strokeStyle = ringColor;
+  ctx.lineWidth = pad * 0.9;
+  ctx.stroke();
+
+  /* outer dark edge */
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + pad * 0.8, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+  ctx.lineWidth = pad * 0.35;
+  ctx.stroke();
+}
+
+/* ── Render ── */
+let curCard = null, curMonster = null;
+
+async function renderResult(card, monster) {
+  const imgs = getImgs(card);
+
+  /* art */
+  const artImg  = document.getElementById('artImg');
+  const artPH   = document.getElementById('artPlaceholder');
+  artImg.style.opacity = '0';
+  artPH.hidden = false;
+
+  if (imgs?.art_crop) {
+    await new Promise(resolve => {
+      artImg.onload  = () => { artImg.style.opacity='1'; artPH.hidden=true; resolve(); };
+      artImg.onerror = () => { artPH.textContent='Art unavailable.'; resolve(); };
+      artImg.src = imgs.art_crop;
+    });
+  } else { artPH.textContent = 'No art.'; }
+
+  const thumb = document.getElementById('cardThumb');
+  if (imgs?.normal) { thumb.src = imgs.normal; thumb.hidden = false; }
+  else thumb.hidden = true;
+
+  /* meta */
+  document.getElementById('metaName').textContent = card.name;
+  document.getElementById('metaType').textContent = card.type_line;
+  const set = card.set_name || card.set?.toUpperCase() || '';
+  const rar = card.rarity ? card.rarity[0].toUpperCase()+card.rarity.slice(1) : '';
+  const art = card.artist ? `Art: ${card.artist}` : '';
+  document.getElementById('metaSet').textContent = [set, rar, art].filter(Boolean).join(' · ');
+
+  /* monster block */
+  document.getElementById('monName').textContent  = monster.name;
+  document.getElementById('monType').textContent  = monster.typeLine;
+  document.getElementById('statLine').textContent = monster.statLine;
+
+  const ul = document.getElementById('abilityList');
+  ul.innerHTML = '';
+  monster.abilities.forEach(ab => {
+    const li = document.createElement('li');
+    li.className = 'ability-item';
+    li.textContent = ab;
+    ul.appendChild(li);
+  });
+
+  const ob = document.getElementById('oracleBlock');
+  if (monster.oracleText) { ob.textContent = monster.oracleText; ob.hidden = false; }
+  else ob.hidden = true;
+
+  const fb = document.getElementById('flavorBlock');
+  if (monster.flavorText) { fb.textContent = `"${monster.flavorText}"`; fb.hidden = false; }
+  else fb.hidden = true;
+
+  /* token */
+  if (imgs?.art_crop) {
+    await drawTokenToCanvas(document.getElementById('tokenCanvas'), imgs.art_crop, monster.colors);
+  }
+}
+
+async function fetchCard() {
+  const btn = document.getElementById('drawBtn');
+  const sm  = document.getElementById('statusMsg');
+  const em  = document.getElementById('errorMsg');
+  const rg  = document.getElementById('resultGrid');
+
+  btn.disabled = true;
+  em.hidden = true;
+  sm.textContent = 'Reaching into the Blind Eternities…';
+  sm.hidden = false;
+  rg.hidden = true;
+
+  try {
+    const url = buildUrl();
+    const res = await fetch(url, { headers: { Accept:'application/json' } });
+    if (!res.ok) {
+      if (res.status === 404) throw new Error('Card not found. Try a different name.');
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.details || `Scryfall returned ${res.status}.`);
+    }
+    const card = await res.json();
+    if (!card.type_line?.includes('Creature')) throw new Error(`"${card.name}" is not a creature. Try again.`);
+
+    curCard    = card;
+    curMonster = convertCard(card);
+    await renderResult(card, curMonster);
+
+    sm.hidden = true;
+    rg.hidden = false;
+  } catch(e) {
+    sm.hidden = true;
+    em.textContent = e.message;
+    em.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function downloadToken() {
+  if (!curCard || !curMonster) return;
+  const imgs = getImgs(curCard);
+  if (!imgs?.art_crop) return;
+
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  await drawTokenToCanvas(c, imgs.art_crop, curMonster.colors);
+
+  c.toBlob(blob => {
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: curMonster.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-token.png'
+    });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }, 'image/png');
+}
+
+function copyStats() {
+  if (!curMonster) return;
+  const lines = [
+    curMonster.name,
+    curMonster.typeLine,
+    '',
+    curMonster.statLine,
+  ];
+  if (curMonster.abilities.length) { lines.push(''); lines.push(...curMonster.abilities); }
+  if (curMonster.flavorText) { lines.push(''); lines.push(`"${curMonster.flavorText}"`); }
+
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const t = document.getElementById('toast');
+    t.textContent = 'Copied to clipboard.';
+    setTimeout(() => { t.textContent = ''; }, 2000);
+  }).catch(() => {
+    const t = document.getElementById('toast');
+    t.textContent = 'Copy failed — try manually.';
+  });
+}
+
+document.getElementById('drawBtn').addEventListener('click', fetchCard);
+document.getElementById('dlBtn').addEventListener('click', downloadToken);
+document.getElementById('copyBtn').addEventListener('click', copyStats);
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') fetchCard();
+});
+</script>
