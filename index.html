@@ -443,6 +443,7 @@ header {
           <p class="token-desc">512×512 PNG — drop directly into Foundry VTT as a token image.</p>
           <div class="btn-row">
             <button class="btn-outline" id="dlBtn">Download PNG</button>
+            <button class="btn-outline" id="fvttBtn">Foundry JSON</button>
             <button class="btn-outline" id="copyBtn">Copy Stats</button>
           </div>
           <div class="toast" id="toast"></div>
@@ -799,7 +800,159 @@ function copyStats() {
 
 document.getElementById('drawBtn').addEventListener('click', fetchCard);
 document.getElementById('dlBtn').addEventListener('click', downloadToken);
+document.getElementById('fvttBtn').addEventListener('click', downloadFoundryJSON);
 document.getElementById('copyBtn').addEventListener('click', copyStats);
+
+/* ── Foundry VTT JSON export ── */
+function fvttId() {
+  const c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({length:16}, () => c[Math.floor(Math.random()*c.length)]).join('');
+}
+
+function fvttStats() {
+  const now = Date.now();
+  return {
+    compendiumSource: null, duplicateSource: null, exportSource: null,
+    coreVersion: '14.364', systemId: 'shadowdark', systemVersion: '4.0.6',
+    lastModifiedBy: null, createdTime: now, modifiedTime: now
+  };
+}
+
+function buildNotesHtml(card, monster) {
+  const fm = n => n >= 0 ? `+${n}` : `${n}`;
+  let html = `<p><strong>AC</strong> ${monster.ac}, <strong>HP</strong> ${monster.hp}, `
+    + `<strong>ATK</strong> ${fm(monster.atkBonus)} (${monster.damageDie}), `
+    + `<strong>MV</strong> ${monster.mv}, `
+    + `<strong>S</strong> ${fm(monster.mods.STR)}, <strong>D</strong> ${fm(monster.mods.DEX)}, `
+    + `<strong>C</strong> ${fm(monster.mods.CON)}, <strong>I</strong> ${fm(monster.mods.INT)}, `
+    + `<strong>W</strong> ${fm(monster.mods.WIS)}, <strong>Ch</strong> ${fm(monster.mods.CHA)}, `
+    + `<strong>AL</strong> ${monster.align}, <strong>LV</strong> ${monster.level}</p>`;
+  monster.abilities.forEach(ab => {
+    const dot = ab.indexOf('.');
+    if (dot > -1) html += `<p><strong>${ab.slice(0,dot)}</strong>.${ab.slice(dot+1)}</p>`;
+    else html += `<p>${ab}</p>`;
+  });
+  if (monster.oracleText) html += `<p><em>${monster.oracleText.replace(/\n/g,'<br>')}</em></p>`;
+  if (monster.flavorText) html += `<p><em>"${monster.flavorText}"</em></p>`;
+  html += `<p><em>Source: ${card.name} — ${card.type_line} (${card.set_name || card.set?.toUpperCase()})</em></p>`;
+  return html;
+}
+
+function generateFoundryJSON(card, monster) {
+  const imgs = getImgs(card);
+  const imgUrl = imgs?.art_crop || 'icons/svg/mystery-man.svg';
+
+  const alignMap = { L:'lawful', N:'neutral', C:'chaotic' };
+  const alignment = alignMap[monster.align] || 'neutral';
+
+  const mvParts = monster.mv.split(' ');
+  const move = mvParts[0];
+  const moveNote = mvParts.slice(1).join(' ').replace(/[()]/g,'').trim();
+
+  const diceMatch = monster.damageDie.match(/(\d+)d(\d+)/);
+  const numDice = diceMatch ? parseInt(diceMatch[1]) : 1;
+
+  const items = [];
+
+  // Attack
+  items.push({
+    _id: fvttId(), effects: [], folder: null,
+    img: 'icons/svg/sword.svg',
+    name: 'Attack',
+    system: {
+      description: '', source: { title: '' },
+      attack: { num: 1 },
+      bonuses: {
+        attackBonus: monster.atkBonus,
+        critical: { failureThreshold: 1, multiplier: 2, successThreshold: 20 },
+        damageBonus: 0
+      },
+      damage: { numDice, special: '', value: monster.damageDie },
+      ranges: ['close'], properties: []
+    },
+    type: 'NPC Attack', _stats: fvttStats(), sort: 0, flags: {}, ownership: { default: 0 }
+  });
+
+  // Features (one per ability)
+  monster.abilities.forEach((ab, i) => {
+    const dot = ab.indexOf('.');
+    const name = dot > -1 ? ab.slice(0, dot) : ab;
+    const desc = dot > -1 ? ab.slice(dot+1).trim() : '';
+    items.push({
+      _id: fvttId(), effects: [], folder: null,
+      img: 'icons/creatures/abilities/dragon-breath-purple.webp',
+      name,
+      system: { description: desc ? `<p>${desc}</p>` : '', source: { title: '' }, properties: [] },
+      type: 'NPC Feature', _stats: fvttStats(), sort: (i+1)*100, flags: {}, ownership: { default: 0 }
+    });
+  });
+
+  const prototypeToken = {
+    actorLink: false, alpha: 1, appendNumber: false,
+    bar1: { attribute: null }, bar2: { attribute: null },
+    detectionModes: {}, displayBars: 0, displayName: 0, disposition: -1,
+    flags: {}, height: 1,
+    light: {
+      alpha: 0.5, angle: 360,
+      animation: { intensity: 5, reverse: false, speed: 5, type: null },
+      attenuation: 0.5, bright: 0, color: null, coloration: 1, contrast: 0,
+      darkness: { max: 1, min: 0 }, dim: 0, luminosity: 0.5,
+      negative: false, priority: 0, saturation: 0, shadows: 0
+    },
+    lockRotation: false, movementAction: null, name: monster.name,
+    occludable: { radius: 0 }, prependAdjective: false, randomImg: false,
+    ring: { colors: { background: null, ring: null }, effects: 1, enabled: false, subject: { scale: 1, texture: null } },
+    rotation: 0,
+    sight: { angle: 360, attenuation: 0.1, brightness: 0, color: null, contrast: 0, enabled: false, range: 100, saturation: 0, visionMode: 'basic' },
+    texture: { alphaThreshold: 0.75, anchorX: 0.5, anchorY: 0.5, fit: 'contain', scaleX: 1, scaleY: 1, src: imgUrl, tint: '#ffffff' },
+    turnMarker: { animation: null, disposition: false, mode: 1, src: null },
+    width: 1, depth: 1
+  };
+
+  return {
+    effects: [], folder: null,
+    img: imgUrl,
+    items,
+    name: monster.name,
+    prototypeToken,
+    system: {
+      alignment,
+      attributes: {
+        ac: { value: monster.ac },
+        hp: { max: monster.hp, value: monster.hp }
+      },
+      level: { value: monster.level, xp: 0 },
+      notes: buildNotesHtml(card, monster),
+      abilities: {
+        str: { mod: monster.mods.STR }, int: { mod: monster.mods.INT },
+        dex: { mod: monster.mods.DEX }, wis: { mod: monster.mods.WIS },
+        con: { mod: monster.mods.CON }, cha: { mod: monster.mods.CHA }
+      },
+      darkAdapted: false,
+      move,
+      moveNote,
+      spellcasting: { ability: '', bonus: 0, attacks: 0 }
+    },
+    type: 'NPC',
+    _stats: fvttStats(),
+    flags: {},
+    ownership: { default: 0 }
+  };
+}
+
+function downloadFoundryJSON() {
+  if (!curCard || !curMonster) return;
+  const data = generateFoundryJSON(curCard, curMonster);
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: `fvtt-Actor-${curMonster.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}.json`
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
 document.getElementById('nameInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') fetchCard();
 });
