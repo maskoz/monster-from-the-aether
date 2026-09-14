@@ -498,7 +498,37 @@ const KEYWORD_MAP = {
   'Rampage':        'Rampage. For each creature beyond the first that blocks it, gains +1 to attacks and damage.',
 };
 
-/* ── Stat derivation ── */
+/* ── Shadowdark Quick Combat table ── */
+const SD_TABLE = [
+  { ac:11, hp:1,   numAtk:1, atkBonus:1,  damageDie:'1',    medMod:-2, lowMod:-4, highMod:1,  dc:9  },
+  { ac:12, hp:4,   numAtk:1, atkBonus:1,  damageDie:'1d4',  medMod:0,  lowMod:-2, highMod:1,  dc:12 },
+  { ac:12, hp:10,  numAtk:1, atkBonus:1,  damageDie:'1d6',  medMod:0,  lowMod:-2, highMod:2,  dc:12 },
+  { ac:13, hp:14,  numAtk:2, atkBonus:3,  damageDie:'1d6',  medMod:1,  lowMod:-2, highMod:2,  dc:12 },
+  { ac:13, hp:19,  numAtk:2, atkBonus:3,  damageDie:'1d6',  medMod:1,  lowMod:-2, highMod:3,  dc:12 },
+  { ac:13, hp:24,  numAtk:2, atkBonus:4,  damageDie:'1d8',  medMod:1,  lowMod:-2, highMod:3,  dc:15 },
+  { ac:14, hp:29,  numAtk:3, atkBonus:5,  damageDie:'1d10', medMod:1,  lowMod:-2, highMod:4,  dc:15 },
+  { ac:14, hp:34,  numAtk:3, atkBonus:6,  damageDie:'1d10', medMod:1,  lowMod:-1, highMod:4,  dc:15 },
+  { ac:14, hp:38,  numAtk:3, atkBonus:6,  damageDie:'1d10', medMod:1,  lowMod:-1, highMod:4,  dc:15 },
+  { ac:15, hp:43,  numAtk:3, atkBonus:7,  damageDie:'2d8',  medMod:2,  lowMod:-1, highMod:5,  dc:15 },
+  { ac:15, hp:48,  numAtk:3, atkBonus:7,  damageDie:'2d8',  medMod:2,  lowMod:-1, highMod:5,  dc:15 },
+  { ac:15, hp:52,  numAtk:3, atkBonus:8,  damageDie:'2d8',  medMod:3,  lowMod:1,  highMod:5,  dc:15 },
+  { ac:16, hp:58,  numAtk:3, atkBonus:8,  damageDie:'2d10', medMod:3,  lowMod:2,  highMod:5,  dc:15 },
+  { ac:16, hp:61,  numAtk:4, atkBonus:8,  damageDie:'2d10', medMod:3,  lowMod:2,  highMod:5,  dc:15 },
+  { ac:16, hp:68,  numAtk:4, atkBonus:9,  damageDie:'2d10', medMod:3,  lowMod:3,  highMod:5,  dc:15 },
+  { ac:17, hp:70,  numAtk:4, atkBonus:9,  damageDie:'2d10', medMod:3,  lowMod:3,  highMod:5,  dc:18 },
+  { ac:17, hp:76,  numAtk:4, atkBonus:9,  damageDie:'2d12', medMod:4,  lowMod:3,  highMod:6,  dc:18 },
+  { ac:17, hp:80,  numAtk:4, atkBonus:10, damageDie:'2d12', medMod:4,  lowMod:3,  highMod:6,  dc:18 },
+  { ac:18, hp:85,  numAtk:4, atkBonus:10, damageDie:'2d12', medMod:4,  lowMod:3,  highMod:6,  dc:18 },
+  { ac:18, hp:89,  numAtk:4, atkBonus:10, damageDie:'2d12', medMod:4,  lowMod:3,  highMod:6,  dc:18 },
+];
+const SD_LV30 = { ac:22, hp:140, numAtk:5, atkBonus:13, damageDie:'3d10', medMod:4, lowMod:3, highMod:7, dc:18 };
+
+function getTableEntry(level) {
+  if (level >= 30) return SD_LV30;
+  return SD_TABLE[Math.min(level, 19)];
+}
+
+/* ── Stat derivation (uses table [Low, High] per level) ── */
 function getStatMods(colors, level) {
   const STATS = ['STR','DEX','CON','INT','WIS','CHA'];
   const t = Object.fromEntries(STATS.map(s => [s, 0]));
@@ -507,48 +537,48 @@ function getStatMods(colors, level) {
     if (v) Object.entries(v).forEach(([s,n]) => { t[s] += n; });
   });
 
-  let hi, md, lo;
-  if      (level <= 2) { hi=2;  md=0;  lo=-2; }
-  else if (level <= 7) { hi=4;  md=1;  lo=-2; }
-  else if (level === 8){ hi=4;  md=2;  lo=-1; }
-  else                 { hi=5;  md=3;  lo=1;  }
+  const { highMod, medMod, lowMod } = getTableEntry(level);
 
   if (!colors || colors.length === 0)
-    return Object.fromEntries(STATS.map(s => [s, md]));
+    return Object.fromEntries(STATS.map(s => [s, medMod]));
 
   const uniq = [...new Set(Object.values(t))].sort((a,b) => b-a);
   const tier = {};
-  if (uniq.length === 1) { tier[uniq[0]] = md; }
+  if (uniq.length === 1) { tier[uniq[0]] = medMod; }
   else {
     uniq.forEach((v,i) => {
-      tier[v] = i === 0 ? hi : i === uniq.length-1 ? lo : md;
+      tier[v] = i === 0 ? highMod : i === uniq.length-1 ? lowMod : medMod;
     });
   }
-  return Object.fromEntries(STATS.map(s => [s, tier[t[s]] ?? md]));
+  return Object.fromEntries(STATS.map(s => [s, tier[t[s]] ?? medMod]));
 }
 
 function convertCard(card) {
-  const level  = Math.max(1, Math.round(card.cmc || 1));
+  const level  = Math.max(0, Math.round(card.cmc || 0));
   const colors = card.colors || [];
+  const entry  = getTableEntry(level);
 
-  const rawPow  = /^\d+$/.test(card.power)     ? parseInt(card.power, 10)     : null;
-  const rawTou  = /^\d+$/.test(card.toughness)  ? parseInt(card.toughness, 10) : null;
+  const rawPow = /^\d+$/.test(card.power)     ? parseInt(card.power, 10)     : null;
+  const rawTou = /^\d+$/.test(card.toughness)  ? parseInt(card.toughness, 10) : null;
 
   const mods = getStatMods(colors, level);
-  const dexAdj = mods.DEX >= 0 ? mods.DEX : Math.ceil(mods.DEX / 2);
-  const baseTou = rawTou !== null ? rawTou : level;
-  const ac = 11 + Math.ceil(baseTou / 2) + dexAdj;
 
-  const tier = level <= 2 ? 1 : level <= 7 ? 2 : 3;
-  const hp   = Math.max(1, Math.floor(4.5 * level) + mods.CON * tier);
+  // AC: table base ± toughness/power ratio (defensive vs offensive) ± DEX (±1)
+  const touOffset = (rawTou !== null && rawPow !== null)
+    ? Math.max(-1, Math.min(1, Math.sign(rawTou - rawPow))) : 0;
+  const dexAdj = mods.DEX > entry.medMod ? 1 : mods.DEX < entry.medMod ? -1 : 0;
+  const ac = entry.ac + touOffset + dexAdj;
 
-  const atkBonus = rawPow !== null ? rawPow : Math.floor(level / 2);
+  // HP: straight from table
+  const hp = entry.hp;
 
-  let damageDie = '1d6';
-  if      (mods.STR >= 5) damageDie = '1d12';
-  else if (mods.STR >= 4) damageDie = '1d10';
-  else if (mods.STR >= 2) damageDie = '1d8';
-  else if (mods.STR <= -2) damageDie = '1d4';
+  // ATK: table base ± power offset vs expected power for this level
+  const expectedPow = Math.max(1, Math.round(level * 0.7));
+  const powOffset   = rawPow !== null ? Math.max(-1, Math.min(2, rawPow - expectedPow)) : 0;
+  const atkBonus    = entry.atkBonus + powOffset;
+  const numAtk      = entry.numAtk;
+  const damageDie   = entry.damageDie;
+  const dc          = entry.dc;
 
   const keywords = card.keywords || [];
   let mv = 'near';
@@ -557,8 +587,6 @@ function convertCard(card) {
   const hasW = colors.includes('W'), hasB = colors.includes('B');
   const align = hasW && !hasB ? 'L' : hasB && !hasW ? 'C' : 'N';
 
-  const dc = 10 + Math.floor(level / 2);
-
   const abilities = keywords
     .filter(k => KEYWORD_MAP[k])
     .map(k => KEYWORD_MAP[k]
@@ -566,13 +594,14 @@ function convertCard(card) {
       .replace(/\[LVL÷3,min 1\]/g, Math.max(1, Math.floor(level/3))));
 
   const fm = n => n >= 0 ? `+${n}` : `${n}`;
+  const atkStr = numAtk > 1 ? `${numAtk}× ${fm(atkBonus)} (${damageDie})` : `${fm(atkBonus)} (${damageDie})`;
   const statLine =
-    `AC ${ac}, HP ${hp}, ATK ${fm(atkBonus)} (${damageDie}), MV ${mv}, ` +
+    `AC ${ac}, HP ${hp}, ATK ${atkStr}, MV ${mv}, ` +
     `S ${fm(mods.STR)}, D ${fm(mods.DEX)}, C ${fm(mods.CON)}, ` +
     `I ${fm(mods.INT)}, W ${fm(mods.WIS)}, Ch ${fm(mods.CHA)}, AL ${align}, LV ${level}`;
 
-  return { name:card.name, typeLine:card.type_line, level, ac, hp, atkBonus, damageDie,
-           mv, mods, align, abilities, statLine, colors,
+  return { name:card.name, typeLine:card.type_line, level, ac, hp,
+           numAtk, atkBonus, damageDie, mv, mods, align, abilities, statLine, colors,
            oracleText: card.oracle_text || '', flavorText: card.flavor_text || '' };
 }
 
@@ -861,7 +890,7 @@ function generateFoundryJSON(card, monster) {
     name: 'Attack',
     system: {
       description: '', source: { title: '' },
-      attack: { num: 1 },
+      attack: { num: monster.numAtk },
       bonuses: {
         attackBonus: monster.atkBonus,
         critical: { failureThreshold: 1, multiplier: 2, successThreshold: 20 },
