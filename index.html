@@ -331,6 +331,25 @@ header {
 :root[data-theme="dark"] .talent-ridealong { background: #4a1010; color: #f0b0b0; }
 :root[data-theme="dark"] .talent-thematic  { background: #181868; color: #b0bcf8; }
 
+/* ── Footer ── */
+footer {
+  text-align: center;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+footer p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+footer a {
+  color: var(--gold);
+  text-decoration: none;
+}
+footer a:hover { text-decoration: underline; }
+
 /* Token section */
 .token-section {
   background: var(--token-bg);
@@ -1133,3 +1152,7 @@ document.getElementById('nameInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') fetchCard();
 });
 </script>
+
+<footer>
+  <p>Magic: The Gathering is a trademark of Wizards of the Coast, which does not endorse this tool. Card images and data courtesy of <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Shadowdark is copyright of Arcane Library LLC; this tool has no association with Arcane Library LLC.</p>
+</footer>
