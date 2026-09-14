@@ -303,6 +303,34 @@ header {
   padding-top: 0.7rem;
 }
 
+/* ── Talent type badges ── */
+.talent-badge {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0.08em 0.42em 0.05em;
+  border-radius: 2px;
+  margin-right: 0.35em;
+  vertical-align: middle;
+  position: relative;
+  top: -0.06em;
+  line-height: 1.6;
+}
+.talent-innate     { background: #1e5c2a; color: #c8f0d0; }
+.talent-ridealong  { background: #7a1e1e; color: #f5cccc; }
+.talent-thematic   { background: #2a2a78; color: #ccd0f8; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .talent-innate    { background: #0d3018; color: #a0e8b0; }
+  :root:not([data-theme="light"]) .talent-ridealong { background: #4a1010; color: #f0b0b0; }
+  :root:not([data-theme="light"]) .talent-thematic  { background: #181868; color: #b0bcf8; }
+}
+:root[data-theme="dark"] .talent-innate    { background: #0d3018; color: #a0e8b0; }
+:root[data-theme="dark"] .talent-ridealong { background: #4a1010; color: #f0b0b0; }
+:root[data-theme="dark"] .talent-thematic  { background: #181868; color: #b0bcf8; }
+
 /* Token section */
 .token-section {
   background: var(--token-bg);
@@ -466,37 +494,110 @@ const COLOR_VOTES = {
 const COLOR_RING = { W:'#c0bcb0', U:'#2864b8', B:'#585870', R:'#b02828', G:'#1a7832' };
 
 const KEYWORD_MAP = {
-  'Flying':         'Flying. MV far. Can attack and be attacked only by flying creatures or those with Reach.',
-  'Deathtouch':     'Deathtouch. A single hit forces a DC [DC] CON save or the target drops to 0 HP.',
-  'Trample':        'Trample. Excess damage on a killing blow carries over to a creature behind the target.',
-  'Double Strike':  'Double Strike. Makes two attack rolls each round.',
-  'First Strike':   'First Strike. Attacks before all other creatures; if target dies it cannot retaliate.',
-  'Lifelink':       'Lifelink. Heals HP equal to all damage dealt.',
-  'Vigilance':      'Vigilance. Attacking imposes no penalty to AC or saves.',
-  'Haste':          'Haste. Acts on the very first round of combat, even if surprised.',
-  'Reach':          'Reach. Can attack flying creatures from the ground.',
-  'Indestructible': 'Indestructible. Cannot be reduced to 0 HP by damage; a special condition is required to destroy it.',
-  'Menace':         'Menace. Cannot be engaged by fewer than two creatures at once.',
-  'Flash':          'Flash. May act once out of initiative order per round.',
-  'Hexproof':       'Hexproof. Cannot be targeted by spells or abilities; gains +4 to all magical saves.',
-  'Ward':           'Ward. Targeting this creature with magic requires a DC [DC] INT save or the spell fails.',
-  'Toxic':          'Toxic. Attacks inflict cumulative poison; 3 stacks deals 1d6 damage per round until cured.',
-  'Fear':           'Fear. Non-undead, non-construct creatures must pass a DC [DC] WIS save or flee for 1d4 rounds.',
-  'Menacing':       'Menace. Cannot be engaged by fewer than two creatures at once.',
-  'Defender':       'Defender. Cannot move to attack; gains +2 AC while stationary.',
-  'Banding':        'Banding. Adjacent allies may redirect received damage to this creature.',
-  'Flanking':       'Flanking. Enemies without Flanking that engage it fight at −1 to all rolls.',
-  'Phasing':        'Phasing. Once per round may become incorporeal, immune to physical damage until its next turn.',
-  'Shadow':         'Shadow. Exists in the shadow-plane; only interacts with other shadow creatures and magic.',
-  'Exalted':        'Exalted. When fighting alone (no allies nearby), gains advantage on attacks and +2 AC.',
-  'Infect':         'Infect. All damage is dealt as permanent −1 stat penalties, not HP loss.',
-  'Regenerate':     'Regenerate. Once per combat, when reduced to 0 HP, returns to 1 HP at the start of its next turn.',
-  'Protection':     'Protection. Immune to one damage type or creature type (GM determines from card text).',
-  'Annihilator':    'Annihilator. When it attacks, the target must discard [LVL÷3,min 1] items or lose an ally action.',
-  'Bushido':        'Bushido. When it enters melee it gains +2 to attacks and AC for that entire encounter.',
-  'Provoke':        'Provoke. Once per round can force one creature to attack it instead of another target.',
-  'Rampage':        'Rampage. For each creature beyond the first that blocks it, gains +1 to attacks and damage.',
+  'Flying':         { type:'Innate',     text:'Flying. MV near (fly). Can attack and be attacked only by flying creatures or those with Reach.' },
+  'Deathtouch':     { type:'Ride-Along', text:'Deathtouch. A single hit forces a DC [DC] CON save or the target drops to 0 HP.' },
+  'Trample':        { type:'Ride-Along', text:'Crush. Excess damage on a killing blow carries over to a creature behind the target. DC [DC] STR or target takes 1d8 extra damage.' },
+  'Double Strike':  { type:'Innate',     text:'Double Strike. Makes two attack rolls each round. Attacks before all other creatures.' },
+  'First Strike':   { type:'Innate',     text:'First Strike. Attacks before all other creatures; if target dies it cannot retaliate.' },
+  'Lifelink':       { type:'Ride-Along', text:'Blood Drain. Heals HP equal to all damage dealt. DC [DC] CON or lose 1 STR on a hit.' },
+  'Vigilance':      { type:'Innate',     text:'Vigilance. Attacking imposes no penalty to AC or saves.' },
+  'Haste':          { type:'Innate',     text:'Haste. Acts on the very first round of combat, even if surprised.' },
+  'Reach':          { type:'Innate',     text:'Reach. Can attack flying creatures from the ground.' },
+  'Indestructible': { type:'Innate',     text:'Impervious. Cannot be reduced to 0 HP by damage; a special condition is required to destroy it.' },
+  'Menace':         { type:'Innate',     text:'Menace. Cannot be engaged by fewer than two creatures at once.' },
+  'Flash':          { type:'Thematic',   text:'Flash. May act once out of initiative order per round.' },
+  'Hexproof':       { type:'Innate',     text:'Hexproof. Cannot be targeted by spells or abilities; gains +4 to all magical saves.' },
+  'Ward':           { type:'Innate',     text:'Ward. Targeting this creature with magic requires a DC [DC] INT save or the spell fails.' },
+  'Toxic':          { type:'Ride-Along', text:'Poison. DC [DC] CON or take 1d4 damage per round for 1d4 rounds. Cumulative stacks; 3 stacks goes to 0 HP on a failed save.' },
+  'Fear':           { type:'Thematic',   text:'Terrify. Non-undead, non-construct creatures must pass a DC [DC] WIS save or flee for 1d4 rounds.' },
+  'Menacing':       { type:'Innate',     text:'Menace. Cannot be engaged by fewer than two creatures at once.' },
+  'Defender':       { type:'Innate',     text:'Defender. Cannot move to attack; gains +2 AC while stationary.' },
+  'Banding':        { type:'Thematic',   text:'Banding. Adjacent allies may redirect received damage to this creature.' },
+  'Flanking':       { type:'Innate',     text:'Flanking. Enemies without Flanking that engage it fight at −1 to all rolls.' },
+  'Phasing':        { type:'Thematic',   text:'Phase. Once per round, become corporeal or incorporeal.' },
+  'Shadow':         { type:'Innate',     text:'Shadow. Exists in the shadow-plane; only interacts with other shadow creatures and magic.' },
+  'Exalted':        { type:'Innate',     text:'Exalted. When fighting alone (no allies nearby), gains ADV on attacks and +2 AC.' },
+  'Infect':         { type:'Ride-Along', text:'Drain. All damage is dealt as permanent −1 STR penalties, not HP loss. Target dies and becomes an ally when reduced to 0 STR.' },
+  'Regenerate':     { type:'Innate',     text:'Regenerate. Regains 2d6 HP on its turn unless wounds are cauterized with acid.' },
+  'Protection':     { type:'Innate',     text:'Impervious. Immune to one damage type or creature type (GM determines from card text).' },
+  'Annihilator':    { type:'Thematic',   text:'Annihilator. When it attacks, the target must discard [LVL÷3,min 1] items or lose an ally action.' },
+  'Bushido':        { type:'Innate',     text:'Bushido. When it enters melee it gains +2 to attacks and AC for that entire encounter.' },
+  'Provoke':        { type:'Thematic',   text:'Provoke. Once per round can force one creature to attack it instead of another target.' },
+  'Rampage':        { type:'Innate',     text:'Rampage. For each creature beyond the first that engages it, gains +1 to attacks and damage.' },
+  'Shroud':         { type:'Innate',     text:'Hexproof. Cannot be targeted by spells or abilities; gains +4 to all magical saves.' },
+  'Persist':        { type:'Innate',     text:'Relentless. If reduced to 0 HP by a non-magical source, DC 15 CON to go to 1 HP instead.' },
+  'Undying':        { type:'Innate',     text:'Relentless. If reduced to 0 HP, returns to 1 HP once per combat with +1 to all attacks.' },
+  'Skulk':          { type:'Innate',     text:'Stealthy. ADV on checks to sneak and hide. Clever. +1d4 damage when attacking with surprise.' },
+  'Riot':           { type:'Innate',     text:'Haste. Acts on the very first round of combat, even if surprised. +1 damage on melee attacks.' },
+  'Cascade':        { type:'Thematic',   text:'Cascade. When it attacks, triggers a random additional effect (GM rolls d6): 1–2 summons 1d4 minions, 3–4 deals 1d8 extra damage to a random target, 5–6 the monster moves far instantly.' },
+  'Absorb':         { type:'Innate',     text:'Iron Hide. Reduces damage from each source by 3 (minimum 0). Half damage from non-magical weapons.' },
 };
+
+/* ── Creature subtype → Innate talent (zine talent bank) ── */
+const SUBTYPE_TALENT_MAP = {
+  'Zombie':    { type:'Innate',     text:'Undead. Immune to morale checks.' },
+  'Skeleton':  { type:'Innate',     text:'Undead. Immune to morale checks.' },
+  'Specter':   { type:'Innate',     text:'Undead. Immune to morale checks. Incorporeal. Half damage from non-magical weapons.' },
+  'Vampire':   { type:'Innate',     text:'Vampire. Must sleep in a coffin daily or lose 2d6 HP each day (cannot heal until resting in coffin). Takes 3d8 damage each round in direct sunlight. Cannot be killed unless pierced through the heart with a wooden stake while at 0 HP.' },
+  'Dragon':    { type:'Innate',     text:'Fireblood. Fire immune. Iron Hide. Half damage from non-magical weapons.' },
+  'Angel':     { type:'Innate',     text:'Impervious. Only damaged by magical or silver sources. Hostile spells targeting it are DC 15 to cast.' },
+  'Demon':     { type:'Innate',     text:'Greater Undead. Immune to morale checks. Only damaged by silver or magical sources.' },
+  'Devil':     { type:'Innate',     text:'Impervious. Only damaged by magical sources.' },
+  'Ghost':     { type:'Innate',     text:'Incorporeal. In place of attacks, become corporeal or incorporeal. Iron Hide. Half damage from non-magical weapons.' },
+  'Spirit':    { type:'Innate',     text:'Incorporeal. Half damage from non-magical weapons.' },
+  'Wraith':    { type:'Innate',     text:'Incorporeal. Half damage from non-magical weapons. Only damaged by magical or silver sources.' },
+  'Shade':     { type:'Innate',     text:'Incorporeal. Half damage from non-magical weapons.' },
+  'Werewolf':  { type:'Innate',     text:'Iron Hide. Half damage from non-magical weapons. Impervious. Only harmed by silver or magical sources.' },
+  'Wolf':      { type:'Innate',     text:'Pack Hunter. Deals +1 damage while an ally is close. Alert. Cannot be surprised.' },
+  'Wurm':      { type:'Innate',     text:'Iron Hide. Half damage from non-magical weapons.' },
+  'Golem':     { type:'Innate',     text:'Golem. Immune to damage from fire, cold, or non-magical sources.' },
+  'Construct': { type:'Innate',     text:'Golem. Immune to damage from cold or non-magical sources.' },
+  'Elemental': { type:'Innate',     text:'Impervious. Immune to one damage type matching its element (GM determines).' },
+  'Merfolk':   { type:'Innate',     text:'Half-Amphibious. Must be submerged in water every 4 hours or suffocates.' },
+  'Kraken':    { type:'Innate',     text:'Deep Dweller. Immune to harm from fire and cold. Amphibious.' },
+  'Leviathan': { type:'Innate',     text:'Deep Dweller. Immune to harm from fire and cold. Amphibious.' },
+  'Serpent':   { type:'Innate',     text:'Deep Dweller. Immune to harm from fire and cold. Amphibious.' },
+  'Hydra':     { type:'Innate',     text:'Regenerate. Regains 2d6 HP on its turn unless wounds are cauterized with fire or acid. Heads. Each severed head regrows two new heads next turn unless cauterized.' },
+  'Troll':     { type:'Innate',     text:'Regenerate. Regains 2d6 HP on its turn unless wounds are cauterized with acid.' },
+  'Phoenix':   { type:'Innate',     text:'Rebirth. A red-hot egg remains after death; monster hatches from it in 1d4 days. Fireblood. Fire immune.' },
+  'Lich':      { type:'Innate',     text:'Phylactery. Cannot be killed while its spirit vessel (an object) is intact. Legendary Undead. Immune to morale checks. Only damaged by magical sources.' },
+  'Horror':    { type:'Thematic',   text:'Gibbering. Creatures within near, DC 12 WIS on their turn or take a random action (d8): 1–3 do nothing, 4–5 move in random direction, 6–7 attack nearest creature, 8 flee.' },
+  'Ooze':      { type:'Innate',     text:'Corrosive. Non-magical metal that touches the monster dissolves on a d6 roll of 1–3. Rubbery. Half damage from stabbing weapons.' },
+  'Fungus':    { type:'Ride-Along', text:'Disease. DC 12 CON or 1d4 CON damage (cannot heal while infected). Repeat check once per day; ends on success. Die at 0 CON.' },
+  'Plant':     { type:'Innate',     text:'Camouflage. Hard to see in natural terrain. Stealthy. ADV on DEX checks to hide and sneak.' },
+  'Faerie':    { type:'Innate',     text:'Feyblood. ADV on DEX checks while in the natural wilds.' },
+  'Faery':     { type:'Innate',     text:'Feyblood. ADV on DEX checks while in the natural wilds.' },
+};
+
+/* ── Oracle text patterns → ride-along / thematic abilities ── */
+const ORACLE_PATTERNS = [
+  { re: /\bpoison counter\b/i,      skipIfKeyword: ['Toxic'],
+    type:'Ride-Along', text:'Poison. DC [DC] CON or take 1d4 damage per round for 1d4 rounds. Cumulative stacks.' },
+  { re: /\bparalyz/i,               skipIfKeyword: [],
+    type:'Ride-Along', text:'Paralyze. DC [DC] CON or paralyzed 1d4 rounds.' },
+  { re: /\bdisease\b/i,             skipIfKeyword: [],
+    type:'Ride-Along', text:'Disease. DC [DC] CON or 1d4 CON damage (cannot heal while ill). Repeat check once per day; ends on success. Die at 0 CON.' },
+  { re: /\bgains? \d+ life\b|\blifelink\b/i, skipIfKeyword: ['Lifelink'],
+    type:'Ride-Along', text:'Life Drain. Each hit heals the monster for 1d4 HP. DC [DC] CON or lose 1 CON.' },
+  { re: /\bgrapple\b|\bgrab\b/i,    skipIfKeyword: [],
+    type:'Ride-Along', text:'Grab. DC [DC] STR or target held. Attack auto-hits each round. DC [DC] STR on turn to break free.' },
+  { re: /\bcharm(ed)?\b/i,          skipIfKeyword: [],
+    type:'Thematic',   text:'Charm. One humanoid within near DC [DC] CHA or under monster\'s control for 1d4 rounds.' },
+  { re: /\bfrightened?\b/i,         skipIfKeyword: ['Fear'],
+    type:'Thematic',   text:'Terrify. A creature who first sees the monster DC [DC] WIS or flees for 1d4 rounds.' },
+  { re: /\bpetrif/i,                skipIfKeyword: [],
+    type:'Thematic',   text:'Petrify. DC [DC] CON or petrified until dispelled.' },
+  { re: /\bcurse\b/i,               skipIfKeyword: [],
+    type:'Ride-Along', text:'Curse. DC [DC] WIS or target gains a magical curse (GM determines the effect).' },
+  { re: /\binvisib/i,               skipIfKeyword: [],
+    type:'Thematic',   text:'Invisibility. 1/day, turn invisible for 3 rounds. Ends if monster attacks.' },
+  { re: /\bbreath weapon\b/i,       skipIfKeyword: [],
+    type:'Thematic',   text:'Breath Weapon. Fills a near-sized area from the monster. DC [DC] DEX or 3d8 damage. Cannot use again for 1d4 rounds.' },
+  { re: /\bdrain\b.{0,40}(life|str|con|wis|int)/i, skipIfKeyword: ['Infect', 'Lifelink'],
+    type:'Ride-Along', text:'Drain. DC [DC] CON or target\'s STR reduced by 1. At 0 STR, target dies.' },
+  { re: /\bregenerates?\b|\bregain\b.{0,20}\bhit points\b/i, skipIfKeyword: ['Regenerate'],
+    type:'Innate',     text:'Regenerate. Regains 2d6 HP on its turn unless wounds are cauterized with acid.' },
+];
 
 /* ── Shadowdark Quick Combat table ── */
 const SD_TABLE = [
@@ -587,11 +688,46 @@ function convertCard(card) {
   const hasW = colors.includes('W'), hasB = colors.includes('B');
   const align = hasW && !hasB ? 'L' : hasB && !hasW ? 'C' : 'N';
 
-  const abilities = keywords
-    .filter(k => KEYWORD_MAP[k])
-    .map(k => KEYWORD_MAP[k]
-      .replace(/\[DC\]/g, dc)
-      .replace(/\[LVL÷3,min 1\]/g, Math.max(1, Math.floor(level/3))));
+  const substitute = txt => txt
+    .replace(/\[DC\]/g, dc)
+    .replace(/\[LVL÷3,min 1\]/g, Math.max(1, Math.floor(level/3)));
+
+  /* Keyword abilities */
+  const seenTexts = new Set();
+  const abilities = [];
+  keywords.filter(k => KEYWORD_MAP[k]).forEach(k => {
+    const text = substitute(KEYWORD_MAP[k].text);
+    if (!seenTexts.has(text)) {
+      abilities.push({ type: KEYWORD_MAP[k].type, text });
+      seenTexts.add(text);
+    }
+  });
+
+  /* Creature subtype innate talents */
+  const emdash = (card.type_line || '').indexOf('—');
+  if (emdash > -1) {
+    (card.type_line.slice(emdash + 1).trim().split(/\s+/)).forEach(st => {
+      const entry = SUBTYPE_TALENT_MAP[st];
+      if (entry && !seenTexts.has(entry.text)) {
+        abilities.push({ type: entry.type, text: entry.text });
+        seenTexts.add(entry.text);
+      }
+    });
+  }
+
+  /* Oracle text pattern abilities */
+  const oracle = card.oracle_text || '';
+  if (oracle) {
+    ORACLE_PATTERNS.forEach(pat => {
+      if (!pat.re.test(oracle)) return;
+      if ((pat.skipIfKeyword || []).some(k => keywords.includes(k))) return;
+      const text = substitute(pat.text);
+      if (!seenTexts.has(text)) {
+        abilities.push({ type: pat.type, text });
+        seenTexts.add(text);
+      }
+    });
+  }
 
   const fm = n => n >= 0 ? `+${n}` : `${n}`;
   const atkStr = numAtk > 1 ? `${numAtk}× ${fm(atkBonus)} (${damageDie})` : `${fm(atkBonus)} (${damageDie})`;
@@ -729,7 +865,16 @@ async function renderResult(card, monster) {
   monster.abilities.forEach(ab => {
     const li = document.createElement('li');
     li.className = 'ability-item';
-    li.textContent = ab;
+    if (ab.type) {
+      const badge = document.createElement('span');
+      const cls = ab.type.toLowerCase().replace(/[^a-z]/g, '');
+      badge.className = `talent-badge talent-${cls}`;
+      badge.textContent = ab.type;
+      li.appendChild(badge);
+      li.appendChild(document.createTextNode(ab.text));
+    } else {
+      li.textContent = ab.text;
+    }
     ul.appendChild(li);
   });
 
@@ -814,7 +959,7 @@ function copyStats() {
     '',
     curMonster.statLine,
   ];
-  if (curMonster.abilities.length) { lines.push(''); lines.push(...curMonster.abilities); }
+  if (curMonster.abilities.length) { lines.push(''); lines.push(...curMonster.abilities.map(a => a.text)); }
   if (curMonster.flavorText) { lines.push(''); lines.push(`"${curMonster.flavorText}"`); }
 
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
@@ -857,9 +1002,10 @@ function buildNotesHtml(card, monster) {
     + `<strong>W</strong> ${fm(monster.mods.WIS)}, <strong>Ch</strong> ${fm(monster.mods.CHA)}, `
     + `<strong>AL</strong> ${monster.align}, <strong>LV</strong> ${monster.level}</p>`;
   monster.abilities.forEach(ab => {
-    const dot = ab.indexOf('.');
-    if (dot > -1) html += `<p><strong>${ab.slice(0,dot)}</strong>.${ab.slice(dot+1)}</p>`;
-    else html += `<p>${ab}</p>`;
+    const text = ab.text ?? ab;
+    const dot = text.indexOf('.');
+    if (dot > -1) html += `<p><strong>${text.slice(0,dot)}</strong>.${text.slice(dot+1)}</p>`;
+    else html += `<p>${text}</p>`;
   });
   if (monster.oracleText) html += `<p><em>${monster.oracleText.replace(/\n/g,'<br>')}</em></p>`;
   if (monster.flavorText) html += `<p><em>"${monster.flavorText}"</em></p>`;
@@ -904,9 +1050,10 @@ function generateFoundryJSON(card, monster) {
 
   // Features (one per ability)
   monster.abilities.forEach((ab, i) => {
-    const dot = ab.indexOf('.');
-    const name = dot > -1 ? ab.slice(0, dot) : ab;
-    const desc = dot > -1 ? ab.slice(dot+1).trim() : '';
+    const text = ab.text ?? ab;
+    const dot = text.indexOf('.');
+    const name = dot > -1 ? text.slice(0, dot) : text;
+    const desc = dot > -1 ? text.slice(dot+1).trim() : '';
     items.push({
       _id: fvttId(), effects: [], folder: null,
       img: 'icons/creatures/abilities/dragon-breath-purple.webp',
