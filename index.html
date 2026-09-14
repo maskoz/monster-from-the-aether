@@ -616,6 +616,10 @@ const ORACLE_PATTERNS = [
     type:'Ride-Along', text:'Drain. DC [DC] CON or target\'s STR reduced by 1. At 0 STR, target dies.' },
   { re: /\bregenerates?\b|\bregain\b.{0,20}\bhit points\b/i, skipIfKeyword: ['Regenerate'],
     type:'Innate',     text:'Regenerate. Regains 2d6 HP on its turn unless wounds are cauterized with acid.' },
+  { re: /\btrample\b/i, skipIfKeyword: ['Trample'],
+    type:'Ride-Along', text:'Crush. Excess damage on a killing blow carries over to a creature behind the target. DC [DC] STR or target takes 1d8 extra damage.' },
+  { re: /\bflying\b/i,  skipIfKeyword: ['Flying'],
+    type:'Innate',     text:'Flying. MV near (fly). Can attack and be attacked only by flying creatures or those with Reach.' },
 ];
 
 /* ── Shadowdark Quick Combat table ── */
@@ -694,7 +698,7 @@ function convertCard(card) {
 
   // ATK: table base ± power offset vs expected power for this level
   const expectedPow = Math.max(1, Math.round(level * 0.7));
-  const powOffset   = rawPow !== null ? Math.max(-1, Math.min(2, rawPow - expectedPow)) : 0;
+  const powOffset   = rawPow !== null ? Math.max(-1, Math.min(1, rawPow - expectedPow)) : 0;
   const atkBonus    = entry.atkBonus + powOffset;
   const numAtk      = entry.numAtk;
   const damageDie   = entry.damageDie;
@@ -902,7 +906,7 @@ async function renderResult(card, monster) {
   else ob.hidden = true;
 
   const fb = document.getElementById('flavorBlock');
-  if (monster.flavorText) { fb.textContent = `"${monster.flavorText}"`; fb.hidden = false; }
+  if (monster.flavorText) { const ft = monster.flavorText.replace(/^"+|"+$/g,''); fb.textContent = `"${ft}"`; fb.hidden = false; }
   else fb.hidden = true;
 
   /* token */
@@ -979,7 +983,7 @@ function copyStats() {
     curMonster.statLine,
   ];
   if (curMonster.abilities.length) { lines.push(''); lines.push(...curMonster.abilities.map(a => a.text)); }
-  if (curMonster.flavorText) { lines.push(''); lines.push(`"${curMonster.flavorText}"`); }
+  if (curMonster.flavorText) { const ft = curMonster.flavorText.replace(/^"+|"+$/g,''); lines.push(''); lines.push(`"${ft}"`); }
 
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
     const t = document.getElementById('toast');
@@ -1027,7 +1031,7 @@ function buildNotesHtml(card, monster) {
     else html += `<p>${text}</p>`;
   });
   if (monster.oracleText) html += `<p><em>${monster.oracleText.replace(/\n/g,'<br>')}</em></p>`;
-  if (monster.flavorText) html += `<p><em>"${monster.flavorText}"</em></p>`;
+  if (monster.flavorText) { const ft = monster.flavorText.replace(/^"+|"+$/g,''); html += `<p><em>"${ft}"</em></p>`; }
   html += `<p><em>Source: ${card.name} — ${card.type_line} (${card.set_name || card.set?.toUpperCase()})</em></p>`;
   return html;
 }
